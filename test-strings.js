@@ -1,7 +1,7 @@
 var assert = require('assert'),
     esprima = require('esprima'),
     escodegen = require('escodegen'),
-    toLiteral = require('scratch').toLiteral;
+    toLiteral = require('./scratch').toLiteral;
 
 
 suite('Concatenating string literals', function (){
@@ -16,7 +16,7 @@ suite('Concatenating string literals', function (){
                 'function test () { return "string1string2string3";}',
                 'function test () { return "string1string2" + 5;}',
                 'function test () { return "string1" + 5 + "string3";}'
-            ].map(function(code) { escodegen.generate(esprima.parse (code));});
+            ].map(function(code, i, ar) { return escodegen.generate(esprima.parse(code));});
 
     function check(source, target) {
         assert.equal(toLiteral(source), target);
