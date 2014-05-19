@@ -26,4 +26,5 @@ estraverse.replace(ast, {
     }
 });
 
-console.log(escodegen.generate (ast));
+codeout = escodegen.generate (ast);
+console.log(codeout);
