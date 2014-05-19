@@ -23,9 +23,10 @@ function toLiteral(src) {
 
 exports.toLiteral = toLiteral;
 
-// var test1 = 'function test () { return "string1" + "string2" + "string3";}' ;
-// var test2 = 'function test () { return "string1" + "string2" + 5;}' ;
-// var test3 = 'function test () { return "string1" + 5 + "string3";}' ;
-// console.log(toLiteral(test1));
-// console.log(toLiteral(test2));
-// console.log(toLiteral(test3));
+// var tests =
+//         [
+//             'function test () { var obj = {key : 1}; return obj["key"];}',
+//             '({key : 1})["key"]',
+//             'function test () { var obj = {"a key" : 1}; return obj["a key"];}',
+//             'function test (obj) { return obj["key"]["nested key"];}'
+//         ];
