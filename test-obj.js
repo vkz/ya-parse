@@ -10,14 +10,16 @@ suite('obj["key"] to obj.key', function (){
                 'function test () { var obj = {key : 1}; return obj["key"];}',
                 '({key : 1})["key"]',
                 'function test () { var obj = {"a key" : 1}; return obj["a key"];}',
-                'function test (obj) { return obj["key"]["nested key"];}'
+                'function test (obj) { return obj["key"]["nested key"];}',
+                'function test (obj) { return obj["key1" + "key2"];}'
             ];
     var results =
             [
                 'function test () { var obj = {key : 1}; return obj.key;}',
                 '({key : 1}).key',
                 'function test () { var obj = {"a key" : 1}; return obj["a key"];}',
-                'function test (obj) { return obj.key["nested key"];}'
+                'function test (obj) { return obj.key["nested key"];}',
+                'function test (obj) { return obj["key1" + "key2"];}'
             ].map(function(code, i, ar) { return escodegen.generate(esprima.parse(code));});
 
     function check(source, target) {
@@ -36,10 +38,12 @@ suite('obj["key"] to obj.key', function (){
         check(tests[2], results[2]);
     });
 
-
     test('should work with nested objects', function() {
         check(tests[3], results[3]);
     });
 
+    test('computed key should remain obj[..]', function() {
+        check(tests[4], results[4]);
+    });
 
 });
