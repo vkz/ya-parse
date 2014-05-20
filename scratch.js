@@ -54,3 +54,9 @@ function toDot(src) {
 exports.toDot = toDot;
 
 // ---------------------- Problem 2-3: scope --------------------------- //
+
+function replaceThis(src) {
+
+}
+
+exports.replaceThis = replaceThis;
