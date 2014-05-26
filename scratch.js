@@ -2,10 +2,10 @@ var esprima = require('esprima'),
     estraverse = require('estraverse'),
     escodegen = require('escodegen');
 
-// // Pollute global - makes testing in Chrome easier
-// esprima = require('esprima'),
-// estraverse = require('estraverse'),
-// escodegen = require('escodegen');
+/**
+ when bundled with Browserify access module functionality from `scratch` object
+ */
+
 
 // ---------------------- Problem 2-1: string literals ----------------- //
 function childrenAreStrings (left, right) {
@@ -26,8 +26,6 @@ function toLiteral(src) {
     });
     return escodegen.generate(ast);
 }
-
-exports.toLiteral = toLiteral;
 
 // ---------------------- Problem 2-2: obj[key] ------------------------ //
 function identifierLike(str) {
@@ -52,8 +50,6 @@ function toDot(src) {
     return escodegen.generate(ast);
 }
 
-exports.toDot = toDot;
-
 // ---------------------- Problem 2-3: scope --------------------------- //
 
 function createsScope(node) {
@@ -63,42 +59,43 @@ function createsScope(node) {
 
 function replaceThis(src) {
 
-    // Enter: when 'Program' or 'FunctionDeclaration' or 'FunctionExpression'
+    // INVARIANT: both `enter` and `leave` callbacks always leave
+    // currentScope pointing at the top of the `scopes` stack
+
+    // enter: when 'Program' or 'FunctionDeclaration' or 'FunctionExpression'
     // - push new scope,
-    // - set currentScope to the pushed one
     // - for every 'ThisExpression' push it onto current scope
 
-    // Leave: when 'Program' or 'FunctionDeclaration' or 'FunctionExpression'
-    // - pop scope
+    // leave: when 'Program' or 'FunctionDeclaration' or 'FunctionExpression'
     // - if scope.length > 2
     // - - scope.forEach node
-    // - - - replace node.object with { name : "_t", type : "Identifier"}
-    // - prepend function's body with 'var _t = this;'
+    // - - - replace node with { name : "_t", type : "Identifier"}
+    // - - prepend function's body with 'var _t = this;'
+    // - restore the INVARIANT
+
 
     var ast = esprima.parse(src),
         scopes = [],
-        newScope = function genEmptyScope() {var empty = []; return empty;};
+        currentScope = [];
 
     estraverse.traverse(ast, {
         enter: function(node, parent) {
             if (createsScope(node)) {
-                // push new scope onto scopes
-                scopes.push([]);
-
+                // push a new scope
+                currentScope = [];
+                scopes.push(currentScope);
             } else if (node.type === 'ThisExpression') {
-                var currentScope = scopes[scopes.length - 1];
+                // at least one scope will have been created,
+                // so currentScope is safe to push into
                 currentScope.push(node);
-
             }
         },
 
         leave: function(node, parent) {
-
-            var currentScope,
-                bodyPrefix;
+            var bodyPrefix;
 
             if (createsScope(node)) {
-                currentScope = scopes.pop();
+                // INVARIANT makes the use of currentScope safe
                 if (currentScope.length > 2) {
 
                     // replace every `this` in scope with `_t`
@@ -109,14 +106,19 @@ function replaceThis(src) {
 
                     // add 'var _t = this;' declaration
                     bodyPrefix = esprima.parse('var _t = this;').body;
-                    node.body = bodyPrefix.concat(node.body);
-
+                    node.type === 'Program' ? node.body = bodyPrefix.concat(node.body) : node.body.body = bodyPrefix.concat(node.body.body);
                 }
+                // leaving the scope, restore the INVARIANT
+                scopes.pop();
+                currentScope = scopes[scopes.length - 1];
             }
-
         }
     });
     return escodegen.generate(ast);
 }
 
-exports.replaceThis = replaceThis;
+/**
+ value of `module.exports` will be bound to `scratch` in the browser
+ scratch === Object {toLiteral: function, toDot: function, replaceThis: function}
+*/
+module.exports = {toLiteral: toLiteral, toDot: toDot, replaceThis: replaceThis};

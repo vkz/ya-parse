@@ -19,7 +19,13 @@ suite('replacing scoped this', function (){
                 'function scope1 () {' +
                 '    this.a(); this.b();' +
                 '    function scope2 () { this.a(); this.b(); this.c(); this.d(); };' +
-                '}'
+                '}',
+
+                // this before and after nested scope
+                'this.a(); this.b(); this.c();' +
+                'function test () { this.a(); this.b(); this.c();}' +
+                'this.d();'
+
 
             ];
     var results =
@@ -31,11 +37,16 @@ suite('replacing scoped this', function (){
                 'var _t = this; _t.a(); _t.b(); _t.c(); _t.d();',
 
                 // nested scopes: global -> scope1 -> scope2
-                'var _t = this; _t.a(); _t.b(); _t.c(); _t.d();' +
+                'var _t = this; _t.a(); _t.b(); _t.c();' +
                 'function scope1 () {' +
                 '    this.a(); this.b();' +
                 '    function scope2 () { var _t = this; _t.a(); _t.b(); _t.c(); _t.d(); };' +
-                '}'
+                '}',
+
+                // this before and after nested scope
+                'var _t = this; _t.a(); _t.b(); _t.c();' +
+                'function test () { var _t = this; _t.a(); _t.b(); _t.c();}' +
+                '_t.d();'
 
             ].map(function(code, i, ar) { return escodegen.generate(esprima.parse(code));});
 
@@ -53,6 +64,10 @@ suite('replacing scoped this', function (){
 
     test('only 3x `this` in global and nested scopes get replaced', function() {
         check(tests[2], results[2]);
+    });
+
+    test('this should be replaced pre- and post- nested scope', function () {
+        check(tests[3], results[3]);
     });
 
 });
